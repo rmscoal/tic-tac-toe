@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum UserStatus {
+  ONLINE
+  OFFLINE
+  IN_MATCH
+}
+
+enum MatchInvitationStatus {
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  PENDING
+}
+
+model User {
+  id                Int                 @id @default(autoincrement())
+  username          String              @unique @db.VarChar(100)
+  password          String              @default("") @db.VarChar(255)
+  status            UserStatus          @default(OFFLINE)
+  // Matches
+  blueMatches       Match[]             @relation(name: "BlueMatches")
+  redMatches        Match[]             @relation(name: "RedMatches")
+  winnerMatches     Match[]             @relation(name: "WinnerMatches")
+  // Friends
+  friends           User[]              @relation("Friends")
+  friendOf          User[]              @relation("Friends")
+  // Friend invitations
+  TargetInvitation  FriendsInvitation[] @relation(name: "TargetInvitations")
+  RequestInvitation FriendsInvitation[] @relation(name: "RequestInvitations")
+
+  @@index([username])
+  @@map("users")
+}
+
+model Match {
+  id       Int     @id @default(autoincrement())
+  // Blue will start as X
+  blue     User    @relation(name: "BlueMatches", fields: [blueId], references: [id], onUpdate: Cascade)
+  blueId   Int
+  // Red will start as O
+  red      User    @relation(name: "RedMatches", fields: [redId], references: [id], onUpdate: Cascade)
+  redId    Int
+  winner   User?   @relation(name: "WinnerMatches", fields: [winnerId], references: [id], onUpdate: Cascade)
+  winnerId Int?
+  onGoing  Boolean @default(true)
+
+  matchInvitationId Int             @unique
+  matchInvitation   MatchInvitation @relation(fields: [matchInvitationId], references: [id])
+
+  @@map("matches")
+}
+
+model MatchInvitation {
+  id           Int      @id @default(autoincrement())
+  challengerId Int
+  challengedId Int
+  expiresAt    DateTime
+
+  status MatchInvitationStatus
+  Match  Match?
+}
+
+model FriendsInvitation {
+  id          Int              @id @default(autoincrement())
+  // Target is whom the invitation is for 
+  target      User             @relation(name: "TargetInvitations", fields: [targetId], references: [id])
+  targetId    Int
+  // Requestee is the one who request for friends invites
+  requesteeId Int
+  requestee   User             @relation(name: "RequestInvitations", fields: [requesteeId], references: [id])
+  status      InvitationStatus
+
+  @@map("friend_invitations")
+}
