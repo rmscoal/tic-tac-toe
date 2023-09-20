@@ -73,6 +73,7 @@ model MatchInvitation {
   challengerId Int
   challengedId Int
   expiresAt    DateTime
+  createdAt    DateTime @default(now())
 
   status MatchInvitationStatus
   Match  Match?

@@ -44,12 +44,19 @@ export class MatchUseCase implements IMatchUC {
         return new NotFriends();
       }
 
-      const invitation: Omit<MatchInvitation, "id"> = {
+      const invitation: Omit<MatchInvitation, "id" | "createdAt"> = {
         challengedId: rival.id,
         challengerId: currentUser.id,
         status: MatchInvitationStatus.PENDING,
         expiresAt: DateTime.now().plus({ minutes: 1 }).toJSDate(),
       };
+
+      let exists = await this.matchRepo.getMatchInvitationByPeople(invitation.challengerId, invitation.challengedId);
+      if (exists) {
+        if (exists.status === MatchInvitationStatus.PENDING && exists.expiresAt > DateTime.now().toJSDate()) {
+          return exists;
+        }
+      }
 
       return await this.matchRepo.createNewInvitation(invitation);
     } catch (err) {
