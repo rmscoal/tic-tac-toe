@@ -12,3 +12,25 @@ export class SelfStatusUnavailable extends AppError {
   }
 }
 
+export class MatchInvitationNotFound extends AppError {
+  constructor() {
+    super(ErrorType.ErrNotFound, 'match invitation not found');
+  }
+}
+
+export class MatchInvitationExpired extends AppError {
+  constructor() {
+    super(ErrorType.ErrNotFound, 'match invitation already expired');
+  }
+}
+
+export class MatchOnProcess extends AppError {
+  constructor() {
+    super(ErrorType.ErrNotFound, 'match already on process');
+  }
+}
+export class MatchInvitationMisdirect extends AppError {
+  constructor() {
+    super(ErrorType.ErrUnprocessableEntity, 'match invitation is not intended for you');
+  }
+}

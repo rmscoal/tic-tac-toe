@@ -14,6 +14,7 @@ export class MatchController extends BaseController {
     this.matchUC = matchUC;
 
     this.router.post('/:rivalID', this.inviteHandler);
+    this.router.post('/accept/:invitationID', this.acceptHandler);
   }
 
   public static create(matchUC: IMatchUC): Router {
@@ -29,7 +30,7 @@ export class MatchController extends BaseController {
 
     const rivalID = parseInt(req.params.rivalID)
     if (isNaN(rivalID)) {
-      this.badRequest(res, new AppError(ErrorType.ErrBadRequest, 'target id has to be a number'));
+      this.badRequest(res, new AppError(ErrorType.ErrBadRequest, 'invitation id has to be a number'));
       return;
     }
 
@@ -37,6 +38,24 @@ export class MatchController extends BaseController {
     if (result instanceof AppError) {
       this.summariseError(res, result);
       return;
+    }
+
+    this.created(res, result);
+  }
+
+  private acceptHandler = async (req: Request, res: Response) => {
+    const currentUser = req.app.get(currentUserKey);
+
+    const invitationID = parseInt(req.params.invitationID)
+    if (isNaN(invitationID)) {
+      this.badRequest(res, new AppError(ErrorType.ErrBadRequest, 'invitation id has to be a number'));
+      return;
+    }
+
+    const result = await this.matchUC.acceptDuel(currentUser, invitationID);
+    if (result instanceof AppError) {
+      this.summariseError(res, result);
+      return
     }
 
     this.created(res, result);

@@ -1,9 +1,10 @@
-import { MatchInvitation, PrismaClient } from "@prisma/client";
-import { DateTime } from "luxon";
+import { Match, MatchInvitation, PrismaClient } from "@prisma/client";
 
 export interface IMatchRepository {
-  getMatchInvitationByPeople(challengerID: number, challengedID: number): Promise<MatchInvitation | null>;
-  createNewInvitation(invitation: Omit<MatchInvitation, "id" | "createdAt">): Promise<MatchInvitation>;
+  getMatchInvitationByID(id: number): Promise<MatchInvitation | null>;
+  getMatchInvitationByPeople(challengerID: number, challengedID: number): Promise<MatchInvitation | null>; createNewInvitation(invitation: Omit<MatchInvitation, "id" | "createdAt">): Promise<MatchInvitation>;
+
+  createNewMatch(match: Omit<Match, "id" | "winnerId">): Promise<Match>;
 }
 
 export class MatchRepository implements IMatchRepository {
@@ -11,6 +12,10 @@ export class MatchRepository implements IMatchRepository {
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma
+  }
+
+  public async getMatchInvitationByID(id: number): Promise<MatchInvitation | null> {
+    return this.prisma.matchInvitation.findFirst({ where: { id }, include: { match: true } });
   }
 
   public async getMatchInvitationByPeople(challengerId: number, challengedId: number): Promise<MatchInvitation | null> {
@@ -29,5 +34,11 @@ export class MatchRepository implements IMatchRepository {
     return this.prisma.matchInvitation.create({
       data: invitation,
     });
+  }
+
+  public async createNewMatch(match: Omit<Match, "id" | "winnerId">): Promise<Match> {
+    return this.prisma.match.create({
+      data: match,
+    })
   }
 }

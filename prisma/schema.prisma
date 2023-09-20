@@ -76,7 +76,7 @@ model MatchInvitation {
   createdAt    DateTime @default(now())
 
   status MatchInvitationStatus
-  Match  Match?
+  match  Match?
 
   @@map("match_invitations")
 }
