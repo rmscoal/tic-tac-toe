@@ -76,6 +76,8 @@ model MatchInvitation {
 
   status MatchInvitationStatus
   Match  Match?
+
+  @@map("match_invitations")
 }
 
 model FriendsInvitation {
