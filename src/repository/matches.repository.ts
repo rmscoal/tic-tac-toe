@@ -1,6 +1,7 @@
 import { Match, MatchInvitation, PrismaClient } from "@prisma/client";
 
 export interface IMatchRepository {
+  getMatchByID(id: number): Promise<Match | null>;
   getMatchInvitationByID(id: number): Promise<MatchInvitation | null>;
   getMatchInvitationByPeople(challengerID: number, challengedID: number): Promise<MatchInvitation | null>; createNewInvitation(invitation: Omit<MatchInvitation, "id" | "createdAt">): Promise<MatchInvitation>;
 
@@ -12,6 +13,10 @@ export class MatchRepository implements IMatchRepository {
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma
+  }
+
+  public async getMatchByID(id: number): Promise<Match | null> {
+    return this.prisma.match.findFirst({ where: { id }, include: { red: true, blue: true } });
   }
 
   public async getMatchInvitationByID(id: number): Promise<MatchInvitation | null> {

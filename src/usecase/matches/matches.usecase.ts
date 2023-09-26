@@ -7,16 +7,21 @@ import {
   MatchInvitationNotFound,
   MatchOnProcess, RivalUnavailable,
   SelfStatusUnavailable,
+  InvalidMatchAccess,
+  MatchHasEnded,
+  MatchNotFound,
 } from "./errors";
 import { UserNotFound } from "../users/errors";
 import { IMatchRepository } from "../../repository/matches.repository";
 import { IFriendsRepository } from "../../repository/friends.repository";
 import { NotFriends } from "../friends/errors";
 import { DateTime } from "luxon";
+import { ActiveMatchRequest } from "../../controllers/v1/dto/request";
 
 export interface IMatchUC {
   inviteDuel(currentUser: User, rivalID: number): Promise<MatchInvitation | AppError>,
   acceptDuel(currentUser: User, invitationID: number): Promise<Match | AppError>,
+  liveMatch(currentUser: User, dto: ActiveMatchRequest): Promise<null | AppError>,
 }
 
 export class MatchUseCase implements IMatchUC {
@@ -71,14 +76,14 @@ export class MatchUseCase implements IMatchUC {
     }
   }
 
-  public async acceptDuel(currerntUser: User, invitationID: number): Promise<Match | AppError> {
+  public async acceptDuel(currentUser: User, invitationID: number): Promise<Match | AppError> {
     try {
       const invitation = await this.matchRepo.getMatchInvitationByID(invitationID);
       if (!invitation) {
         return new MatchInvitationNotFound();
       }
 
-      if (invitation.challengedId !== currerntUser.id) {
+      if (invitation.challengedId !== currentUser.id) {
         return new MatchInvitationMisdirect()
       }
 
@@ -101,8 +106,8 @@ export class MatchUseCase implements IMatchUC {
         return new RivalUnavailable()
       }
 
-      const blue = Math.random() < 0.5 ? currerntUser : challenger;
-      const red = blue === currerntUser ? challenger : currerntUser;
+      const blue = Math.random() < 0.5 ? currentUser : challenger;
+      const red = blue === currentUser ? challenger : currentUser;
 
       console.log("BLUE", blue);
       console.log("RED", red);
@@ -118,5 +123,22 @@ export class MatchUseCase implements IMatchUC {
     } catch (err) {
       return new UnexpectedError(err)
     }
+  }
+
+  public async liveMatch(currentUser: User, dto: ActiveMatchRequest): Promise<null | AppError> {
+    const match = await this.matchRepo.getMatchByID(dto.id);
+    if (!match) {
+      return new MatchNotFound();
+    }
+
+    if (match?.blueId !== currentUser.id && match?.redId !== currentUser.id) {
+      return new InvalidMatchAccess();
+    }
+
+    if (!match.onGoing) {
+      return new MatchHasEnded();
+    }
+
+    return null;
   }
 }

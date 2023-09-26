@@ -81,7 +81,9 @@ export class FriendsUseCase implements IFriendsUseCase {
     try {
       const validate = ProcessInvitation.safeParse(dto);
       if (!validate.success) {
-        return new UnprocessableEntity(validate.error)
+        if ('error' in validate) {
+          return new UnprocessableEntity(validate.error);
+        }
       }
 
       let invitation = await this.friendsRepo.getInvitationByID(dto.id);

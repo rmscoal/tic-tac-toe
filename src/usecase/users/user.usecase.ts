@@ -32,7 +32,9 @@ export class UserUseCase implements IUserUseCase {
       const validate = SignupRequest.safeParse(dto);
 
       if (!validate.success) {
-        return new UnprocessableEntity(validate.error);
+        if ('error' in validate) {
+          return new UnprocessableEntity(validate.error);
+        }
       }
 
       const exists = await this.userRepo.checkUniqueness({
@@ -63,7 +65,9 @@ export class UserUseCase implements IUserUseCase {
     try {
       const validate = LoginRequest.safeParse(dto);
       if (!validate.success) {
-        return new UnprocessableEntity(validate.error);
+        if ('error' in validate) {
+          return new UnprocessableEntity(validate.error);
+        }
       }
 
       const user = await this.userRepo.getUserByUsername(dto.username);

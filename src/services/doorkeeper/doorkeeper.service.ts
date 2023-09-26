@@ -5,6 +5,8 @@ import { AppError, ErrorType } from '../../shared/AppError';
 import { SessionExpired, UserNotFoundInPayload } from './errors';
 import { User } from '@prisma/client';
 
+const AccessTokenDuration: string = '1h'
+
 export interface IDoorkeeper {
   hashPassword(raw: string): Promise<string>;
   verifyPassword(hash: string, raw: string): Promise<boolean>;
@@ -40,12 +42,18 @@ export class Doorkeeper implements IDoorkeeper {
   }
 
   public async signJWT(user: User): Promise<string> {
-    const jwt = await new jose.SignJWT({ user })
+    const jwt = await new jose.SignJWT({
+      user: {
+        id: user.id,
+        username: user.username,
+        status: user.status,
+      }
+    })
       .setProtectedHeader({ alg: this.alg })
       .setIssuedAt()
       .setIssuer(this.issuer)
       .setAudience(this.audience)
-      .setExpirationTime('1h')
+      .setExpirationTime(AccessTokenDuration)
       .sign(this.secret);
 
     return jwt;
@@ -78,6 +86,6 @@ export class Doorkeeper implements IDoorkeeper {
   }
 
   private isUser(obj: any): obj is User {
-    return typeof obj === 'object' && 'id' in obj && 'username' in obj && 'password' in obj;
+    return typeof obj === 'object' && 'id' in obj && 'username' in obj && 'status' in obj;
   }
 }

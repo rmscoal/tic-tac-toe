@@ -1,5 +1,11 @@
 import { AppError, ErrorType } from "../../shared/AppError";
 
+/**
+ ********************************
+ * Match Invitations Error
+ ********************************
+ */
+
 export class RivalUnavailable extends AppError {
   constructor() {
     super(ErrorType.ErrUnprocessableEntity, 'rival not available for a duel');
@@ -29,8 +35,33 @@ export class MatchOnProcess extends AppError {
     super(ErrorType.ErrNotFound, 'match already on process');
   }
 }
+
 export class MatchInvitationMisdirect extends AppError {
   constructor() {
     super(ErrorType.ErrUnprocessableEntity, 'match invitation is not intended for you');
   }
 }
+
+/**
+ ********************************
+ * Live Matches Error
+ ********************************
+ */
+export class MatchNotFound extends AppError {
+  constructor() {
+    super(ErrorType.ErrNotFound, 'match not found');
+  }
+}
+
+export class InvalidMatchAccess extends AppError {
+  constructor() {
+    super(ErrorType.ErrForbidden, 'you are not the player in this match');
+  }
+}
+
+export class MatchHasEnded extends AppError {
+  constructor() {
+    super(ErrorType.ErrBadRequest, 'the match has ended');
+  }
+}
+
