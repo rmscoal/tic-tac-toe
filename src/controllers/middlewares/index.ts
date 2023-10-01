@@ -1,6 +1,7 @@
 import { doorkeeperService } from '../../services/doorkeeper';
-import { AuthMiddleware } from './auth.middleware';
+import { AuthMiddleware, AuthSocketMiddleware } from './auth.middleware';
 
 const authMiddleware = AuthMiddleware.create(doorkeeperService);
+const authSocketMiddleware = AuthSocketMiddleware.create(doorkeeperService);
 
-export { authMiddleware };
+export { authMiddleware, authSocketMiddleware };

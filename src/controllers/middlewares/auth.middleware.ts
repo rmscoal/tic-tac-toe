@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Response, Request, Router } from 'express';
 import { BaseController } from '../v1/base.controller';
 import { IDoorkeeper } from '../../services/doorkeeper/doorkeeper.service';
-import { AppError, ErrorType } from '../../shared/AppError';
+import { AppError, ErrorType, UnauthenticatedError } from '../../shared/AppError';
 import { UserNotFoundInPayload } from '../../services/doorkeeper/errors';
 import { currentUserKey } from '../v1/constants';
+import { User } from '@prisma/client';
+import { Socket } from 'socket.io';
 
 export class AuthMiddleware extends BaseController {
   private router: Router;
@@ -57,6 +60,36 @@ export class AuthMiddleware extends BaseController {
       return;
     }
 
+    next();
+  };
+}
+
+export class AuthSocketMiddleware {
+  private dkSrv: IDoorkeeper;
+
+  private constructor(dkSrv: IDoorkeeper) {
+    this.dkSrv = dkSrv;
+  }
+
+  public static create(dkSrv: IDoorkeeper): AuthSocketMiddleware {
+    return new AuthSocketMiddleware(dkSrv);
+  }
+
+  public authenticate = async (socket: Socket, next: any) => {
+    // Authenticate action
+    const authorization = socket.request.headers.authorization;
+    if (!authorization) {
+      next(new UnauthenticatedError());
+      return;
+    }
+
+    const result = await this.dkSrv.verifyJWT(authorization!);
+    if (result instanceof AppError) {
+      next(new UnauthenticatedError());
+      return;
+    }
+
+    socket.data = result as User;
     next();
   };
 }

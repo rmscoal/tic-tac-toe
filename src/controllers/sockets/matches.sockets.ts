@@ -4,47 +4,57 @@ import { BaseSocket } from './base.socket';
 import { IMatchUC } from '../../usecase/matches/matches.usecase';
 import { SocketEvent } from '../../shared/contants';
 import { ActiveMatchRequest } from '../v1/dto/request';
-import { IDoorkeeper } from '../../services/doorkeeper/doorkeeper.service';
 import { AppError } from '../../shared/AppError';
+import { authSocketMiddleware } from '../middlewares';
+import { UnrecognisedMatchID } from './errors';
 
 export class MatchSocket extends BaseSocket {
   private handler: Namespace;
   private matchUC: IMatchUC;
-  private dkSrv: IDoorkeeper;
+  private parser: RegExp;
 
-  constructor(io: Server, namespace: string, matchUC: IMatchUC, dkSrv: IDoorkeeper) {
+  constructor(io: Server, namespace: string | RegExp, matchUC: IMatchUC) {
     super(io, namespace);
+    this.parser = /\/match\/(\d+)/;
     this.matchUC = matchUC;
-    this.dkSrv = dkSrv;
     this.handler = this.io.of(this.namespace);
+    this.handler.use(authSocketMiddleware.authenticate);
 
     this.handler.on(SocketEvent.CONNECTION, async (socket) => {
-      // Authenticate action
-      const authorization = socket.request.headers.authorization;
-      if (!authorization) {
-        socket.send('Unauthorized action');
+      const currentUser: User = socket.data;
+
+      const parsedNSP = socket.nsp.name.match(this.parser);
+      if (!parsedNSP) {
+        this.errResponse(socket, new UnrecognisedMatchID());
         socket.disconnect();
       }
+      const roomId = parsedNSP![1];
 
-      const result = await this.dkSrv.verifyJWT(authorization!);
-      if (result instanceof AppError) {
-        socket.send(result.message);
-        socket.disconnect();
-      }
-
-      const currentUser = result as User;
+      // Ask the user to join room with the
+      // given match id parsed from the nsp.
+      socket.join(roomId);
 
       socket.on(SocketEvent.MESSAGE, async (data: ActiveMatchRequest) => {
         const result = await this.matchUC.liveMatch(currentUser, data);
         if (result instanceof AppError) {
-          socket.send(result);
+          this.errResponse(socket, result);
         } else {
-          this.handler.emit(SocketEvent.MESSAGE, data);
+          this.handler.to(roomId).emit(SocketEvent.MESSAGE, result);
+          // If the match ended then we disconnect all clients
+          // in our current match room.
+          if (result.status === 'END') {
+            this.handler.timeout(1000).disconnectSockets();
+          }
         }
       });
 
       socket.on(SocketEvent.DISCONNECT, () => {
         this.handler.emit('DISCONNECT');
+      });
+
+      socket.on(SocketEvent.ERROR, (err: Error) => {
+        this.errResponse(socket, err as AppError);
+        socket.disconnect();
       });
     });
   }

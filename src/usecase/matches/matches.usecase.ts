@@ -23,8 +23,9 @@ import {
   MatchHasEnded,
   MatchNotFound,
   NotYourTurn,
+  BlockAlreadyFilled,
 } from './errors';
-import { IMove } from '../../models/match.model';
+import { IMove, LiveMatchResponse } from '../../models/match.model';
 
 export interface IMatchUC {
   inviteDuel(currentUser: User, rivalID: number): Promise<MatchInvitation | AppError>;
@@ -32,7 +33,7 @@ export interface IMatchUC {
     currentUser: User,
     dto: ProcessMatchInvitationRequest
   ): Promise<Match | null | AppError>;
-  liveMatch(currentUser: User, dto: ActiveMatchRequest): Promise<null | AppError>;
+  liveMatch(currentUser: User, dto: ActiveMatchRequest): Promise<LiveMatchResponse | AppError>;
 }
 
 export class MatchUseCase implements IMatchUC {
@@ -157,7 +158,10 @@ export class MatchUseCase implements IMatchUC {
     }
   }
 
-  public async liveMatch(currentUser: User, dto: ActiveMatchRequest): Promise<null | AppError> {
+  public async liveMatch(
+    currentUser: User,
+    dto: ActiveMatchRequest
+  ): Promise<LiveMatchResponse | AppError> {
     try {
       const match = await this.matchRepo.getMongoMatchByID(dto.id);
       if (!match) {
@@ -188,11 +192,161 @@ export class MatchUseCase implements IMatchUC {
         return new UnprocessableEntity(validate.error);
       }
 
-      await this.matchRepo.insertMove(match.id, move);
+      if (match.state[dto.x][dto.y] !== '-') {
+        return new BlockAlreadyFilled();
+      }
 
-      return null;
+      // Setup initial result
+      const result: LiveMatchResponse = {
+        status: 'CONTINUE',
+        id: dto.id,
+        move,
+      };
+
+      // Edit the move with the current state...
+      match.state[dto.x][dto.y] = move.piece;
+      const turn = match.turn === match.blueId ? match.redId : match.blueId;
+      await this.matchRepo.insertMove(match.id, move, match.state, turn);
+
+      // Next check if it was a winning move
+      if (this.checkWinning(move, match.state)) {
+        result.status = 'END';
+        result.winner = move.mover;
+        return result;
+      }
+
+      // If not then check if the game state
+      // is a draw
+      if (this.checkDraw(match.state)) {
+        result.status = 'END';
+        result.draw = true;
+        return result;
+      }
+
+      return result;
     } catch (err) {
       return new UnexpectedError(err);
     }
+  }
+
+  /**
+   * checkWinning checks whether the move with
+   * the game state is a winning move or not
+   * @param move the move from user
+   * @param state the game board state
+   * @returns whether the move was a winning move or not
+   */
+  private checkWinning(move: IMove, state: string[][]): boolean {
+    return (
+      this.checkDiag(move, state) ||
+      this.checkHorizontal(move, state) ||
+      this.checkVertical(move, state)
+    );
+  }
+
+  /**
+   * checkDraw checks whether the game board
+   * state is a draw or not
+   * @param state the game board state
+   * @returns
+   */
+  private checkDraw(state: string[][]): boolean {
+    for (const x of state) {
+      for (const y of x) {
+        if (y === '-') return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * checkHorizontal checks whether the move alongside
+   * its relative horizontal state is a strike
+   * @param move the move from user
+   * @param state the game board state
+   * @returns if the horizontal move is a strike
+   */
+  private checkHorizontal(move: IMove, state: string[][]): boolean {
+    for (let i = 0; i < 3; i++) {
+      if (state[move.x][i] !== move.piece) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * checkVertical checks whether the move alongside
+   * its relative vertical state is a strike
+   * @param move the move from user
+   * @param state the game board state
+   * @returns if the vertical state is a strike
+   */
+  private checkVertical(move: IMove, state: string[][]): boolean {
+    for (let i = 0; i < 3; i++) {
+      if (state[i][move.y] !== move.piece) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * checkDiag checks whether the diagonal is a strike
+   * of the move's piece
+   * @param move the move from user
+   * @param state the game board state
+   * @returns if the diagonals state is a strike
+   */
+  private checkDiag(move: IMove, state: string[][]): boolean {
+    if (move.x !== move.y + 2 && move.x !== move.y) return false;
+
+    switch ([move.x, move.y]) {
+      case [1, 1]:
+        if (this.checkMainDiag(move, state)) {
+          return true;
+        }
+        if (this.checkSecondaryDiag(move, state)) {
+          return true;
+        }
+        return false;
+
+      case [0, 0]:
+      case [2, 2]:
+        if (this.checkMainDiag(move, state)) {
+          return true;
+        }
+        return false;
+      case [0, 2]:
+      case [2, 0]:
+        if (this.checkSecondaryDiag(move, state)) {
+          return true;
+        }
+        return false;
+      default:
+        return false;
+    }
+  }
+
+  private checkMainDiag(move: IMove, state: string[][]): boolean {
+    for (let i = 0; i < 3; i++) {
+      if (state[i][i] !== move.piece) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private checkSecondaryDiag(move: IMove, state: string[][]): boolean {
+    for (let i = 0, j = 2; i < 3; i++, j--) {
+      if (state[i][j] !== move.piece) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

@@ -20,4 +20,15 @@ export interface IMatch {
   winner?: number;
   turn: number;
   moves: IMove[];
+  state: string[][];
 }
+
+export type LiveMatchStatus = 'CONTINUE' | 'END';
+
+export type LiveMatchResponse = {
+  id: number;
+  status: LiveMatchStatus;
+  winner?: number;
+  draw?: boolean;
+  move: IMove;
+};

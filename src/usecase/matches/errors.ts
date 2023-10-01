@@ -70,3 +70,9 @@ export class NotYourTurn extends AppError {
     super(ErrorType.ErrBadRequest, 'it is currently not your turn');
   }
 }
+
+export class BlockAlreadyFilled extends AppError {
+  constructor() {
+    super(ErrorType.ErrBadRequest, 'block has already been filled with an exisiting piece');
+  }
+}

@@ -61,3 +61,9 @@ export class UnexpectedError extends AppError {
     super(ErrorType.ErrUnexpected, 'Something unexpected happened');
   }
 }
+
+export class UnauthenticatedError extends AppError {
+  constructor() {
+    super(ErrorType.ErrUnauthorized, 'Unauthorized request');
+  }
+}

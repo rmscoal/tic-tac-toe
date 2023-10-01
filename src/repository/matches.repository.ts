@@ -15,7 +15,7 @@ export interface IMatchRepository {
   ): Promise<MatchInvitation>;
   updateInvitationStatus(invitation: MatchInvitation): Promise<void>;
   createNewMatch(match: Omit<Match, 'id' | 'winnerId'>): Promise<Match>;
-  insertMove(id: number, move: IMove): Promise<void>;
+  insertMove(id: number, move: IMove, state: string[][], nextId: number): Promise<void>;
 }
 
 export class MatchRepository implements IMatchRepository {
@@ -79,12 +79,13 @@ export class MatchRepository implements IMatchRepository {
       onGoing: true,
       turn: match.blueId,
       moves: [],
+      state: [['-', '-', '-'], ['-', '-', '-'], ['-', '-', '-']],
     });
 
     return result;
   }
 
-  public async insertMove(id: number, move: IMove): Promise<void> {
-    this.mongo.updateOne({ id }, { $push: { moves: move } });
+  public async insertMove(id: number, move: IMove, state: string[][], nextId: number): Promise<void> {
+    this.mongo.updateOne({ id }, { $push: { moves: move }, $set: { turn: nextId, state } });
   }
 }
