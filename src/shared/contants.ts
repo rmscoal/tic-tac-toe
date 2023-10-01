@@ -3,5 +3,3 @@ export enum SocketEvent {
   DISCONNECT = 'disconnect',
   MESSAGE = 'message',
 }
-
-export type Pieces = "O" | "X";

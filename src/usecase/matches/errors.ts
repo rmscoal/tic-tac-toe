@@ -1,4 +1,4 @@
-import { AppError, ErrorType } from "../../shared/AppError";
+import { AppError, ErrorType } from '../../shared/AppError';
 
 /**
  ********************************
@@ -14,7 +14,7 @@ export class RivalUnavailable extends AppError {
 
 export class SelfStatusUnavailable extends AppError {
   constructor() {
-    super(ErrorType.ErrUnprocessableEntity, 'you are unvailable for a match')
+    super(ErrorType.ErrUnprocessableEntity, 'you are unvailable for a match');
   }
 }
 
@@ -65,3 +65,8 @@ export class MatchHasEnded extends AppError {
   }
 }
 
+export class NotYourTurn extends AppError {
+  constructor() {
+    super(ErrorType.ErrBadRequest, 'it is currently not your turn');
+  }
+}

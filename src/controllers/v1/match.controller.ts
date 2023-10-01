@@ -3,6 +3,7 @@ import { BaseController } from './base.controller';
 import { AppError, ErrorType } from '../../shared/AppError';
 import { IMatchUC } from '../../usecase/matches/matches.usecase';
 import { currentUserKey } from './constants';
+import { ProcessMatchInvitationRequest } from './dto/request';
 
 export class MatchController extends BaseController {
   private router: Router;
@@ -14,7 +15,7 @@ export class MatchController extends BaseController {
     this.matchUC = matchUC;
 
     this.router.post('/:rivalID', this.inviteHandler);
-    this.router.post('/accept/:invitationID', this.acceptHandler);
+    this.router.patch('/process', this.processHandler);
   }
 
   public static create(matchUC: IMatchUC): Router {
@@ -28,9 +29,12 @@ export class MatchController extends BaseController {
   private inviteHandler = async (req: Request, res: Response) => {
     const currentUser = req.app.get(currentUserKey);
 
-    const rivalID = parseInt(req.params.rivalID)
+    const rivalID = parseInt(req.params.rivalID);
     if (isNaN(rivalID)) {
-      this.badRequest(res, new AppError(ErrorType.ErrBadRequest, 'invitation id has to be a number'));
+      this.badRequest(
+        res,
+        new AppError(ErrorType.ErrBadRequest, 'invitation id has to be a number')
+      );
       return;
     }
 
@@ -41,23 +45,21 @@ export class MatchController extends BaseController {
     }
 
     this.created(res, result);
-  }
+  };
 
-  private acceptHandler = async (req: Request, res: Response) => {
+  private processHandler = async (req: Request, res: Response) => {
     const currentUser = req.app.get(currentUserKey);
 
-    const invitationID = parseInt(req.params.invitationID)
-    if (isNaN(invitationID)) {
-      this.badRequest(res, new AppError(ErrorType.ErrBadRequest, 'invitation id has to be a number'));
+    const result = await this.matchUC.processDuelInvitation(
+      currentUser,
+      req.body as ProcessMatchInvitationRequest
+    );
+
+    if (result instanceof AppError) {
+      this.summariseError(res, result);
       return;
     }
 
-    const result = await this.matchUC.acceptDuel(currentUser, invitationID);
-    if (result instanceof AppError) {
-      this.summariseError(res, result);
-      return
-    }
-
     this.created(res, result);
-  }
+  };
 }
