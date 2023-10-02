@@ -16,6 +16,7 @@ export interface IMatchRepository {
   updateInvitationStatus(invitation: MatchInvitation): Promise<void>;
   createNewMatch(match: Omit<Match, 'id' | 'winnerId'>): Promise<Match>;
   insertMove(id: number, move: IMove, state: string[][], nextId: number): Promise<void>;
+  endGame(id: number, winnnerId?: number): Promise<void>;
 }
 
 export class MatchRepository implements IMatchRepository {
@@ -79,13 +80,29 @@ export class MatchRepository implements IMatchRepository {
       onGoing: true,
       turn: match.blueId,
       moves: [],
-      state: [['-', '-', '-'], ['-', '-', '-'], ['-', '-', '-']],
+      state: [
+        ['-', '-', '-'],
+        ['-', '-', '-'],
+        ['-', '-', '-'],
+      ],
     });
 
     return result;
   }
 
-  public async insertMove(id: number, move: IMove, state: string[][], nextId: number): Promise<void> {
+  public async insertMove(
+    id: number,
+    move: IMove,
+    state: string[][],
+    nextId: number
+  ): Promise<void> {
     this.mongo.updateOne({ id }, { $push: { moves: move }, $set: { turn: nextId, state } });
+  }
+
+  public async endGame(id: number, winnerId?: number): Promise<void> {
+    Promise.all([
+      this.mongo.updateOne({ id }, { $set: { onGoing: false, winner: winnerId } }),
+      this.prisma.match.update({ where: { id }, data: { winnerId: winnerId, onGoing: false } }),
+    ]);
   }
 }

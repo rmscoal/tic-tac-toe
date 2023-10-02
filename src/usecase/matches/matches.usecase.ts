@@ -210,6 +210,7 @@ export class MatchUseCase implements IMatchUC {
 
       // Next check if it was a winning move
       if (this.checkWinning(move, match.state)) {
+        await this.matchRepo.endGame(match.id, currentUser.id);
         result.status = 'END';
         result.winner = move.mover;
         return result;
@@ -218,6 +219,7 @@ export class MatchUseCase implements IMatchUC {
       // If not then check if the game state
       // is a draw
       if (this.checkDraw(match.state)) {
+        await this.matchRepo.endGame(match.id);
         result.status = 'END';
         result.draw = true;
         return result;
