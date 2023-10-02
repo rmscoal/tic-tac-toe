@@ -43,7 +43,7 @@ export class MatchSocket extends BaseSocket {
           // If the match ended then we disconnect all clients
           // in our current match room.
           if (result.status === 'END') {
-            this.handler.timeout(1000).disconnectSockets();
+            this.handler.in(roomId).timeout(1000).disconnectSockets(true);
           }
         }
       });
