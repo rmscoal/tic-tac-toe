@@ -1,8 +1,9 @@
 {
   "name": "tic-tac-toe",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others \"npm run dev -w=frontend\" \"npm run dev -w=backend\""
+    "dev": "concurrently --kill-others \"yarn workspace frontend dev\" \"yarn workspace backend dev\""
   },
   "author": "rmscoal",
   "license": "ISC",

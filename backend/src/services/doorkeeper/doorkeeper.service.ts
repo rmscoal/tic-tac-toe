@@ -5,7 +5,7 @@ import { AppError, ErrorType } from '../../shared/AppError';
 import { SessionExpired, UserNotFoundInPayload } from './errors';
 import { User } from '@prisma/client';
 
-const AccessTokenDuration: string = '1h'
+const AccessTokenDuration: string = '1h';
 
 export interface IDoorkeeper {
   hashPassword(raw: string): Promise<string>;
@@ -47,7 +47,7 @@ export class Doorkeeper implements IDoorkeeper {
         id: user.id,
         username: user.username,
         status: user.status,
-      }
+      },
     })
       .setProtectedHeader({ alg: this.alg })
       .setIssuedAt()

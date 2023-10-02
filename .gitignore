@@ -1,3 +1,13 @@
+# Packages
 node_modules
-# Keep environment variables out of version control
+
+# Environment
 .env
+
+# Built folder
+dist
+
+# Yarn
+.yarn
+.yarnrc.yml
+.pnp.*
