@@ -58,12 +58,12 @@ export class AppError extends Error {
 export class UnexpectedError extends AppError {
   constructor(error?: Error | unknown) {
     console.error(error);
-    super(ErrorType.ErrUnexpected, 'Something unexpected happened');
+    super(ErrorType.ErrUnexpected, 'something unexpected happened');
   }
 }
 
 export class UnauthenticatedError extends AppError {
   constructor() {
-    super(ErrorType.ErrUnauthorized, 'Unauthorized request');
+    super(ErrorType.ErrUnauthorized, 'unauthenticated request');
   }
 }
