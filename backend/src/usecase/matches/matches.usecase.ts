@@ -6,10 +6,7 @@ import { IMatchRepository } from '../../repository/matches.repository';
 import { IFriendsRepository } from '../../repository/friends.repository';
 import { NotFriends } from '../friends/errors';
 import { DateTime } from 'luxon';
-import {
-  ActiveMatchRequest,
-  ProcessMatchInvitationRequest,
-} from '../../controllers/v1/dto/request';
+import { ActiveMatchRequest, ProcessMatchInvitationRequest } from '../../controllers/v1/dto/request';
 import { MoveSchema, ProcessMatchInvitationSchema } from './schema';
 import { UnprocessableEntity } from '../common/errors';
 import {
@@ -29,10 +26,7 @@ import { IMove, LiveMatchResponse } from '../../models/match.model';
 
 export interface IMatchUC {
   inviteDuel(currentUser: User, rivalID: number): Promise<MatchInvitation | AppError>;
-  processDuelInvitation(
-    currentUser: User,
-    dto: ProcessMatchInvitationRequest
-  ): Promise<Match | null | AppError>;
+  processDuelInvitation(currentUser: User, dto: ProcessMatchInvitationRequest): Promise<Match | null | AppError>;
   liveMatch(currentUser: User, dto: ActiveMatchRequest): Promise<LiveMatchResponse | AppError>;
 }
 
@@ -41,11 +35,7 @@ export class MatchUseCase implements IMatchUC {
   private matchRepo: IMatchRepository;
   private friendsRepo: IFriendsRepository;
 
-  constructor(
-    userRepo: IUserRepository,
-    friendsRepo: IFriendsRepository,
-    matchRepo: IMatchRepository
-  ) {
+  constructor(userRepo: IUserRepository, friendsRepo: IFriendsRepository, matchRepo: IMatchRepository) {
     this.userRepo = userRepo;
     this.matchRepo = matchRepo;
     this.friendsRepo = friendsRepo;
@@ -79,15 +69,9 @@ export class MatchUseCase implements IMatchUC {
         expiresAt: DateTime.now().plus({ minutes: 1 }).toJSDate(),
       };
 
-      const exists = await this.matchRepo.getMatchInvitationByPeople(
-        invitation.challengerId,
-        invitation.challengedId
-      );
+      const exists = await this.matchRepo.getMatchInvitationByPeople(invitation.challengerId, invitation.challengedId);
       if (exists) {
-        if (
-          exists.status === MatchInvitationStatus.PENDING &&
-          exists.expiresAt > DateTime.now().toJSDate()
-        ) {
+        if (exists.status === MatchInvitationStatus.PENDING && exists.expiresAt > DateTime.now().toJSDate()) {
           return exists;
         }
       }
@@ -158,10 +142,7 @@ export class MatchUseCase implements IMatchUC {
     }
   }
 
-  public async liveMatch(
-    currentUser: User,
-    dto: ActiveMatchRequest
-  ): Promise<LiveMatchResponse | AppError> {
+  public async liveMatch(currentUser: User, dto: ActiveMatchRequest): Promise<LiveMatchResponse | AppError> {
     try {
       const match = await this.matchRepo.getMongoMatchByID(dto.id);
       if (!match) {
@@ -239,11 +220,7 @@ export class MatchUseCase implements IMatchUC {
    * @returns whether the move was a winning move or not
    */
   private checkWinning(move: IMove, state: string[][]): boolean {
-    return (
-      this.checkDiag(move, state) ||
-      this.checkHorizontal(move, state) ||
-      this.checkVertical(move, state)
-    );
+    return this.checkDiag(move, state) || this.checkHorizontal(move, state) || this.checkVertical(move, state);
   }
 
   /**

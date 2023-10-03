@@ -4,12 +4,12 @@ import { AppError, UnexpectedError } from '../shared/AppError';
 
 export interface IFriendsRepository {
   getFriends(user: User, username?: string): Promise<User[]>;
-  getInvitationByID(id: number): Promise<FriendsInvitation | null>
+  getInvitationByID(id: number): Promise<FriendsInvitation | null>;
   getInvitationByPeople(targetID: number, requesteeID: number): Promise<FriendsInvitation | null>;
-  getIncomingRequests(userID: number): Promise<FriendsInvitation[]>
+  getIncomingRequests(userID: number): Promise<FriendsInvitation[]>;
   createNewInvitation(target: User | number, requestee: User | number): Promise<FriendsInvitation>;
-  updateInvitationStatus(id: number, status: "REJECTED" | "PENDING" | "ACCEPTED"): Promise<FriendsInvitation>;
-  addFriendsByID(user: User, friendID: number): Promise<null | AppError>
+  updateInvitationStatus(id: number, status: 'REJECTED' | 'PENDING' | 'ACCEPTED'): Promise<FriendsInvitation>;
+  addFriendsByID(user: User, friendID: number): Promise<null | AppError>;
 }
 
 export class FriendsRepository implements IFriendsRepository {
@@ -19,22 +19,19 @@ export class FriendsRepository implements IFriendsRepository {
     this.prisma = prisma;
   }
 
-  public async getInvitationByPeople(
-    targetID: number,
-    requesteeID: number
-  ): Promise<FriendsInvitation | null> {
+  public async getInvitationByPeople(targetID: number, requesteeID: number): Promise<FriendsInvitation | null> {
     return this.prisma.friendsInvitation.findFirst({
       where: {
         OR: [
           {
             targetId: targetID,
-            requesteeId: requesteeID
+            requesteeId: requesteeID,
           },
           {
             targetId: requesteeID,
             requesteeId: targetID,
-          }
-        ]
+          },
+        ],
       },
     });
   }
@@ -44,14 +41,11 @@ export class FriendsRepository implements IFriendsRepository {
       where: { id },
       include: {
         requestee: true,
-      }
-    })
+      },
+    });
   }
 
-  public async createNewInvitation(
-    target: User | number,
-    requestee: User | number
-  ): Promise<FriendsInvitation> {
+  public async createNewInvitation(target: User | number, requestee: User | number): Promise<FriendsInvitation> {
     const invitation: Omit<FriendsInvitation, 'id'> = {
       targetId: 0,
       requesteeId: 0,
@@ -82,14 +76,17 @@ export class FriendsRepository implements IFriendsRepository {
         requestee: {
           select: {
             id: true,
-            username: true
-          }
-        }
-      }
+            username: true,
+          },
+        },
+      },
     });
   }
 
-  public async updateInvitationStatus(id: number, status: 'REJECTED' | 'PENDING' | 'ACCEPTED'): Promise<FriendsInvitation> {
+  public async updateInvitationStatus(
+    id: number,
+    status: 'REJECTED' | 'PENDING' | 'ACCEPTED'
+  ): Promise<FriendsInvitation> {
     return this.prisma.friendsInvitation.update({
       where: {
         id,
@@ -97,7 +94,7 @@ export class FriendsRepository implements IFriendsRepository {
       data: {
         status,
       },
-    })
+    });
   }
 
   public async addFriendsByID(user: User, friendID: number): Promise<null | AppError> {
@@ -109,20 +106,21 @@ export class FriendsRepository implements IFriendsRepository {
           },
           data: {
             friends: {
-              connect: [{ id: friendID }]
-            }
-          }
-        }), this.prisma.user.update({
+              connect: [{ id: friendID }],
+            },
+          },
+        }),
+        this.prisma.user.update({
           where: {
-            id: friendID
+            id: friendID,
           },
           data: {
             friends: {
-              connect: [{ id: user.id }]
-            }
-          }
-        })
-      ])
+              connect: [{ id: user.id }],
+            },
+          },
+        }),
+      ]);
       return null;
     } catch (err) {
       return new UnexpectedError(err);
@@ -130,23 +128,13 @@ export class FriendsRepository implements IFriendsRepository {
   }
 
   public async getFriends(user: User, username?: string): Promise<User[]> {
-    // const result = await this.prisma.user.findFirst({
-    //   where: {
-    //     id: user.id,
-    //   },
-    //   include: {
-    //     friends: true
-    //   }
-    // });
-    //
-    // return result?.friends ?? [];
     let where: any = {
       friendOf: {
         some: {
           id: user.id,
-        }
+        },
       },
-    }
+    };
 
     if (username) {
       if (typeof username === 'string' && username !== '') {
@@ -154,11 +142,11 @@ export class FriendsRepository implements IFriendsRepository {
           ...where,
           username: {
             contains: username,
-          }
-        }
+          },
+        };
       }
     }
 
-    return this.prisma.user.findMany({ where })
+    return this.prisma.user.findMany({ where });
   }
 }

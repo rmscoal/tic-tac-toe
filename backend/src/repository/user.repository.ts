@@ -83,11 +83,11 @@ export class UserRepository implements IUserRepository {
   public async updateStatus(user: User, status: UserStatus): Promise<null> {
     await this.prisma.user.update({
       where: {
-        id: user.id
+        id: user.id,
       },
       data: {
-        status
-      }
+        status,
+      },
     });
 
     return null;

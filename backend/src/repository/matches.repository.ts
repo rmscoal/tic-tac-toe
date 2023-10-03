@@ -6,13 +6,8 @@ export interface IMatchRepository {
   getMatchByID(id: number): Promise<Match | null>;
   getMongoMatchByID(id: number): Promise<IMatch | null>;
   getMatchInvitationByID(id: number): Promise<MatchInvitation | null>;
-  getMatchInvitationByPeople(
-    challengerID: number,
-    challengedID: number
-  ): Promise<MatchInvitation | null>;
-  createNewInvitation(
-    invitation: Omit<MatchInvitation, 'id' | 'createdAt'>
-  ): Promise<MatchInvitation>;
+  getMatchInvitationByPeople(challengerID: number, challengedID: number): Promise<MatchInvitation | null>;
+  createNewInvitation(invitation: Omit<MatchInvitation, 'id' | 'createdAt'>): Promise<MatchInvitation>;
   updateInvitationStatus(invitation: MatchInvitation): Promise<void>;
   createNewMatch(match: Omit<Match, 'id' | 'winnerId'>): Promise<Match>;
   insertMove(id: number, move: IMove, state: string[][], nextId: number): Promise<void>;
@@ -40,10 +35,7 @@ export class MatchRepository implements IMatchRepository {
     return this.prisma.matchInvitation.findFirst({ where: { id }, include: { match: true } });
   }
 
-  public async getMatchInvitationByPeople(
-    challengerId: number,
-    challengedId: number
-  ): Promise<MatchInvitation | null> {
+  public async getMatchInvitationByPeople(challengerId: number, challengedId: number): Promise<MatchInvitation | null> {
     return this.prisma.matchInvitation.findFirst({
       where: {
         challengerId,
@@ -55,9 +47,7 @@ export class MatchRepository implements IMatchRepository {
     });
   }
 
-  public async createNewInvitation(
-    invitation: Omit<MatchInvitation, 'id'>
-  ): Promise<MatchInvitation> {
+  public async createNewInvitation(invitation: Omit<MatchInvitation, 'id'>): Promise<MatchInvitation> {
     return this.prisma.matchInvitation.create({
       data: invitation,
     });
@@ -90,12 +80,7 @@ export class MatchRepository implements IMatchRepository {
     return result;
   }
 
-  public async insertMove(
-    id: number,
-    move: IMove,
-    state: string[][],
-    nextId: number
-  ): Promise<void> {
+  public async insertMove(id: number, move: IMove, state: string[][], nextId: number): Promise<void> {
     this.mongo.updateOne({ id }, { $push: { moves: move }, $set: { turn: nextId, state } });
   }
 

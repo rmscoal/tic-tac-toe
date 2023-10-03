@@ -5,7 +5,7 @@ import { AppError, ErrorType } from '../../shared/AppError';
 import { SessionExpired, UserNotFoundInPayload } from './errors';
 import { User } from '@prisma/client';
 
-const AccessTokenDuration: string = '1h';
+const AccessTokenDuration = '1h';
 
 export interface IDoorkeeper {
   hashPassword(raw: string): Promise<string>;
@@ -23,9 +23,7 @@ export class Doorkeeper implements IDoorkeeper {
 
   constructor() {
     this.salt = Buffer.from('This is IV456', 'utf-8');
-    this.secret = new TextEncoder().encode(
-      'cc7e0d44fd473002f1c42167459001140ec6389b7353f8088f4d9a95f2f596f2'
-    );
+    this.secret = new TextEncoder().encode('cc7e0d44fd473002f1c42167459001140ec6389b7353f8088f4d9a95f2f596f2');
     this.alg = 'HS256';
     this.issuer = 'tic-tac-toe';
     this.audience = 'tic-tac-toe-players';

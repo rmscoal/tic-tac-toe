@@ -1,11 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { User, UserStatus } from '@prisma/client';
 import { IUserRepository } from '../../repository/user.repository';
-import {
-  DuplicateUserRecord,
-  MismatchedPassword,
-  UserNotFound,
-} from './errors';
+import { DuplicateUserRecord, MismatchedPassword, UserNotFound } from './errors';
 import { AppError, UnexpectedError } from '../../shared/AppError';
 import { CredentialResult, LoginDTO, NewUserDTO } from './dto';
 import { IDoorkeeper } from '../../services/doorkeeper/doorkeeper.service';
