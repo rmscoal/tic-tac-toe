@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "prisma:generate": "npx prisma generate",
-    "dev": "nodemon ./src/index.ts",
+    "dev": "dotenv -e ../.env -- nodemon ./src/index.ts",
     "lint": "eslint . --ext .ts"
   },
   "license": "ISC",
