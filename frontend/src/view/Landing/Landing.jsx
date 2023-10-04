@@ -1,4 +1,4 @@
-import { Navbar, Typography, Button } from '@material-tailwind/react';
+import { Typography, Button } from '@material-tailwind/react';
 import Div from '../../components/common/Div';
 
 import Logo from '../../assets/images/tic-tac-toe.png';
