@@ -14,7 +14,7 @@ As we all probably know, tic-tac-toe is a game where people places their moves i
 
 1. Have MongoDB and PostgreSQL installed.
 2. Have `concurrently` npm packacge installed (globally prefered).
-3. Setup database.
+3. Check the `.env.template` for Postgres environment, and look into `backend/src/repository/mongo.ts` for the MongoDB. Sorry have not provide env for Mongo.
 
 ## How to Clone
 
