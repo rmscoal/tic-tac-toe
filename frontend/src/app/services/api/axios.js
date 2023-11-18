@@ -7,7 +7,7 @@ const ax = axios.create({
 
 ax.interceptors.request.use(
   function (config) {
-    const token = sessionStorage.getItem('token');
+    const token = sessionStorage.getItem('accessToken');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }

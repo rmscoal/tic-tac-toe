@@ -1,13 +1,13 @@
-export default class UserAPI {
+export default class FriendsAPI {
   #axios;
 
   constructor(axios) {
     this.#axios = axios;
   }
 
-  async login(data) {
+  async friendsList() {
     try {
-      const resp = await this.#axios.post('/users/login', data);
+      const resp = await this.#axios.get('/friends');
       return resp.data;
     } catch (err) {
       throw new Error(err.response.data.error.message);

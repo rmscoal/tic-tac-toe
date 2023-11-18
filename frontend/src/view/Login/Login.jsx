@@ -3,9 +3,11 @@ import { initLoginForm } from './type';
 
 // Services
 import { userAPI } from '../../app/services/api';
+import { storeUserInformation } from '../../app/storage/local';
+import { storeAccessToken } from '../../app/storage/session';
 
 // Components
-import { Button, Card, CardBody, CardFooter, CardHeader, Input, Typography } from '@material-tailwind/react';
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Input, Typography } from '@material-tailwind/react';
 import Center from '../../components/position/Center';
 import Form from '../../components/form/Form';
 
@@ -14,6 +16,7 @@ import Logo from '../../assets/images/tic-tac-toe.png';
 
 export default function LoginView() {
   const [form, setForm] = useState(initLoginForm);
+  const [err, setErr] = useState('');
 
   const handleForm = (field) => (event) => {
     setForm({ ...form, [field]: event.target.value });
@@ -25,14 +28,27 @@ export default function LoginView() {
     userAPI
       .login(form)
       .then((data) => {
-        console.log(data);
+        let err;
+        err = storeAccessToken(data.data?.accessToken);
+        if (err != null) {
+          setErr(err.message);
+          return;
+        }
+        err = storeUserInformation({ id: data?.id, username: data?.username });
+        if (err != null) {
+          setErr(err.message);
+        }
       })
       .catch((err) => {
-        console.error(err);
+        setErr(err.message);
       });
   };
 
-  return (
+  return err !== '' ? (
+    <Center className="h-screen">
+      <Alert className="w-1/2" color="red">{`${err}, please refresh page`}</Alert>
+    </Center>
+  ) : (
     <Center className="h-screen w-screen">
       <Card className="w-96 h-max">
         <Center>
