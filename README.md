@@ -2,7 +2,7 @@
 
 Tic-Tac-Toe Online Game
 
-> On halt
+> Status: On halt
 
 ## What is this project
 
